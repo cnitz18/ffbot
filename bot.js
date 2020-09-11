@@ -3,12 +3,43 @@ const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 const PORT = 3000;
-const IP = '71.34.241.103';
 const POSTROUTE = 'https://api.groupme.com/v3/bots/post';
 const {spawn} = require('child_process');
 const localtunnel = require('localtunnel');
-const GROUP_ID='62312892';
+const cron = require('node-cron');
+const KEVIN = '30664125';
+const CASEY = '32215382';
+const NICK = '30790872';
+const GROUP_ID='62312892'; //this is the test channel
+//const GROUP_ID='51790623'; //this is the real channel
 const ff = require('./ff');
+const CMDOBJ = {
+    '!myteam' : {
+        help : ``
+    },
+    '!recap' : {
+        help : ``
+    },
+    '!help':{help:{}},
+    '!tradeblock':{}
+}
+const help = `
+Welcome to the y3ez Fantasy Football Bot. Keep in mind this is a work in progress, and more features are still coming\n
+\nCommands : 
+\n"!myteam" - Lists your team name
+\n"!myteam roster" - Lists your current roster
+\n"!myteam record" - Lists your current record
+\n
+\n"!recap" - Shows the most recent week's box score from the current season
+\n"!recap 2" - Shows Week 2's box scores from this season
+\n"!recap 2019 10" - Shows last year week 10's box scores (Just because I fucking can)
+\n
+\nPLEASE NOTE: This bot currently lives on my PC, so if/when my PC is turned off, it will not be responsive (especially overnight). Later this week, I'll move it to a more permanent location, and eventually it'll be up consistently.
+\nMore features to come!
+`
+const CMDS = Object.keys(CMDOBJ);
+const TOKEN = 'YJ67aRUsWfGYKFLHljQCWx5awOavxZN90Apdfvay';
+//"thisWeek","record",""
 
 module.exports = (() => {
     let _ = new WeakMap();
@@ -17,18 +48,37 @@ module.exports = (() => {
             let me = {
                 ffClient : new ff(),
                 handleMessage : async (d) => {
-                    if( d.text.indexOf('!bot') == -1 ) return;
-                    let args = d.text.split('!bot')
-                    args = args[1].split(' ').slice(1)
-                    console.log('args received:',args)
-                    switch( args[0].toLowerCase() ){
-                        case 'myteam':
-                            let info = await me.ffClient.getTeam(d.sender_id);
-                            if( info )
-                                this.message(info);
-                            else this.message('Something went wrong retrieving your team. Talk to Casey to get it fixed.')
-                            break;
+                    let searchFor = (str) => {
+                        if( d.text.indexOf(str) == -1 ) return false;
+                        let args = d.text.split(" ");
+                        args = args.slice(1);
+                        return args;
                     }
+                    CMDS.forEach(async (ent)=>{
+                        let searchRes = searchFor(ent);
+                        if( searchRes ){
+                            let msg;
+                            switch(ent){
+                                case '!myteam' : 
+                                    msg = await me.ffClient.getTeam(d.sender_id,searchRes);
+                                    this.message(msg);
+                                    break;
+                                case '!recap':
+                                    await this.message('Working on getting your recap...')
+                                    msg = await me.ffClient.getRecap(searchRes)
+                                    //this.message('hmm...')
+                                    this.message(msg);
+                                    break;
+                                case '!help':
+                                    this.message(help);
+                                    break;
+                                case '!tradeblock':
+                                    msg = await me.ffClient.tradeBlock(d.sender_id,searchRes);
+                                    this.message(msg);
+                                    break;
+                            }
+                        }
+                    });
                 }
             };
 
@@ -38,14 +88,13 @@ module.exports = (() => {
         async init(){
             app.get('/',async (req,res)=>{
                 res.send('Hello World!');
-                _.get(this).lastGetReqBody = req.body;
-                this.message('test test')
             })
             let handleMsg = (body) => _.get(this).handleMessage(body);
             app.post('/', function (req, res) {
                 let body = req.body;
-                console.log('POST HEARD')
-                console.log('req body:',req.body);
+                console.log()
+                console.log('POST BODY:',req.body);
+                console.log();
                 if( req.body.sender_type == 'user' )
                     handleMsg(body);
                 res.send('POST request to the homepage')
@@ -54,19 +103,32 @@ module.exports = (() => {
                 console.log(`Example app listening at http://localhost:${PORT}`)
             });
             _.get(this).tunnel = await localtunnel({port:PORT})
-            console.log('tunnel.url:',_.get(this).tunnel.url)
             _.get(this).tunnel.on('close',(d)=>{
                 console.log('tunnel closed::',d)
             })
+            await this.clearBots();
             return this.setupBot( _.get(this).tunnel.url );
         }
-
-        message( msg ){
+        async schedule( which ){
+            switch(which){
+                case 'remindKevin':
+                    cron.schedule('30 17 * * 4',()=>{
+                        this.message("It's Thursday evening, which means it's time for @Kevin Miller's weekly reminder to set your lineup!!!", [KEVIN])
+                    });
+                    break;
+            }
+        }
+        remindKevin(){
+            return this.schedule('remindKevin')
+        }
+        message( msg, mentions=[] ){
             return new Promise((resolve,reject) => {
                 let obj = { "text":msg, "bot_id":_.get(this).botID };
+                if( mentions.length > 0 ) obj.attachments = [{
+                    type:'mentions',user_ids:mentions
+                }]
                 let curl = spawn('curl',['-d',JSON.stringify(obj),POSTROUTE]);
                 curl.on('close', (code) => {
-                    console.log(`message exited with code ${code}`);
                     resolve(code);
                 });
             })
@@ -74,24 +136,43 @@ module.exports = (() => {
 
         setupBot( url ){
             return new Promise((resolve,reject) => {
-                console.log('setting callback')
-                let obj = { bot : { "name":"Fantasy Football Bot", "group_id":GROUP_ID, "callback_url":url } }
-                let curl = spawn('curl',['-X','POST','-d',JSON.stringify(obj),'-H','Content-Type: application/json','https://api.groupme.com/v3/bots?token=YJ67aRUsWfGYKFLHljQCWx5awOavxZN90Apdfvay'])
+                let obj = { bot : { "name":"y3ez Fantasy Football", "group_id":GROUP_ID, "callback_url":url } }
+                let curl = spawn('curl',['-X','POST','-d',JSON.stringify(obj),'-H','Content-Type: application/json',`https://api.groupme.com/v3/bots?token=${TOKEN}`])
                 curl.stdout.on('data',(d)=>{
                     try{
                         let res = JSON.parse(d.toString());
                         _.get(this).botID = res.response.bot.bot_id;
-                        console.log('BOTID:',_.get(this).botID)
                     }catch(err){}
                 })
                 curl.on('close', (code) => {
-                    console.log(`setup closed with ${code}`);
-                    resolve(code);
+                    this.remindKevin().then(() => resolve(code));
                 });
             })
         }
         clearBots(){
             //implement this to clear previous bots, when deploying a new one
+            return new Promise((resolve,reject)=> {
+                let delBot = ( bot_id ) => new Promise((r)=>{
+                    let obj = { bot_id }
+                    let proc = spawn('curl',['-d',JSON.stringify(obj),'-H','Content-Type: application/json',`https://api.groupme.com/v3/bots/destroy?token=${TOKEN}`]);
+                    proc.on('close',(code)=>{
+                        r(code)
+                    })
+                })
+                let curl = spawn('curl',[`https://api.groupme.com/v3/bots?token=${TOKEN}`])
+                curl.stdout.on('data',(d)=>{
+                    try{
+                        let delArr = [];
+                        let res = JSON.parse(d.toString());
+                        let bots = res.response;
+                        bots.forEach((bot) => {
+                            if( bot.group_id==GROUP_ID )
+                                delArr.push( delBot(bot.bot_id) )
+                        })
+                        Promise.all(delArr).then(()=>resolve())
+                    }catch(err){}
+                })
+            })
         }
     }
     return FFBot;

@@ -1,0 +1,14 @@
+{
+    "meta": {
+        "code": 200
+    },
+    "response": [{
+        "name": "Y3EZ2 Fantasy Football",
+        "bot_id": "f4c0f7097800ff0a4be2166b87",
+        "group_id": "62312892",
+        "group_name": "BotTest",
+        "avatar_url": null,
+        "callback_url": "https://hungry-catfish-43.loca.lt",
+        "dm_notification": false
+    }]
+}
