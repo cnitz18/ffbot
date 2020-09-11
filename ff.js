@@ -68,16 +68,9 @@ module.exports = (() => {
                             resolve(`Overall : ${team.wins}-${team.losses}-${team.ties}, Division : ${team.divisionWins}-${team.divisionLosses}-${team.divisionTies}`)
                         if( extras.indexOf('roster') !== -1 ){
                             let posMap = {};
-                            console.log(team.roster)
                             team.roster.forEach(ent=>{
-                                if( !posMap[ent.defaultPosition] ) 
-                                    posMap[ent.defaultPosition] = [];
-                                posMap[ent.defaultPosition].push(ent.fullName)
-                            })
-                            let str = `~~~~~ ${team.name} Roster ~~~~~\n\n`;
-                            for( let pos in posMap ){
                                 let realPos;
-                                switch(pos){
+                                switch(ent.defaultPosition){
                                     case 'RB/WR':
                                         realPos = 'WR'; break;
                                     case 'WR/TE':
@@ -87,10 +80,15 @@ module.exports = (() => {
                                     case 'WR':
                                         realPos = 'TE'; break;
                                     default:
-                                        realPos = pos;
+                                        realPos = ent.defaultPosition;
                                 }
-                                str+=`--${realPos}:\n\t\t${posMap[pos].join(',')}\n`
-                            }
+                                if( !posMap[realPos] ) 
+                                    posMap[realPos] = [];
+                                posMap[realPos].push(ent.fullName)
+                            })
+                            let str = `~~~~~ ${team.name} Roster ~~~~~\n\n`;
+                            for( let pos in posMap )
+                                str+=`--${pos}:\n\t\t${posMap[pos].join(',')}\n`
                             if( !internal )
                                 resolve(str);
                             else resolve(posMap);
@@ -137,7 +135,7 @@ module.exports = (() => {
         saveBlock(){
             fs.writeFileSync(BLOCKPATH,JSON.stringify(_.get(this).block))
         }
-        async tradeBlock(id,args){
+        async tradeBlock(id,args=[]){
             let res = await this._tradeBlock(id,args);
             this.saveBlock();
             return res;
@@ -162,10 +160,12 @@ module.exports = (() => {
             }
             block = parseBlock();
             let teamName = await this.getTeam(id,[],true);
+            let endStr = `=================================================`
             if( args.length == 0 )
-                return `~~~~~Current trade block for ${teamName}~~~~~\n` + stringify()
+                return `====== Current trade block for ${teamName} ======\n` + stringify() + endStr;
             else{
                 let myTeam = await this.getTeam(id,['roster'],true);
+                console.log('myTeam:',myTeam)
                 let arrs = { add : [], del : [] }
                 let prev;
                 args.forEach((ent)=>{
@@ -174,9 +174,25 @@ module.exports = (() => {
                     else if( ent == 'del' )
                         prev = 'del'
                     else if( prev ){
-                        let player;
-
-
+                        let player, no, pos;
+                        no = parseInt(ent.substring(ent.length-1));
+                        pos = ent.substring(0,ent.length-1);
+                        console.log('prev:',prev,'ent:',ent,'pos',pos,'no',no)
+                        if( !no || !pos ) return;
+                        no--;
+                        pos = pos.toUpperCase();
+                        if( pos == 'D' || pos == 'ST' )
+                            pos = 'D/ST';
+                        player = myTeam[pos][no]
+                        if( !player ) return;
+                        let exists = block[pos].indexOf(player) !== -1;
+                        if( !exists && prev == 'add' ){
+                            console.log('adding:',player);
+                            block[pos].push(player)
+                        }else if( exists && prev == 'del') {
+                            console.log('deleting:',player)
+                            block[pos].splice(block[pos].indexOf(player),1)
+                        }
                     }
 
                     
