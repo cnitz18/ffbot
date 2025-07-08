@@ -10,7 +10,10 @@ console.log('working?')
 
 async function main(){
     try{
-        var freeAgents = await client.getFreeAgents({ seasonId: new Date().getFullYear(-1) })
+        var freeAgents = await client.getTeamsAtWeek({
+            seasonId: seasonId,
+            scoringPeriodId: 1
+        })
         console.log(freeAgents.length + ' free agents found');
     }catch (error) {
         console.error('Error fetching free agents:', error);
