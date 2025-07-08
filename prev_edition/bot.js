@@ -38,7 +38,7 @@ Welcome to the y3ez Fantasy Football Bot. Keep in mind this is a work in progres
 \nMore features to come!
 `
 const CMDS = Object.keys(CMDOBJ);
-const TOKEN = 'YJ67aRUsWfGYKFLHljQCWx5awOavxZN90Apdfvay';
+const TOKEN = process.env.BOT_TOKEN;
 //"thisWeek","record",""
 
 module.exports = (() => {
