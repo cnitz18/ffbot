@@ -1,15 +1,20 @@
 {
   "name": "ffbot",
   "version": "1.0.0",
-  "description": "",
+  "description": "ESPN Fantasy Football API Explorer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "dotenv": "^17.1.0",
-    "espn-fantasy-football-api": "^2.0.1"
+    "dotenv": "^16.3.1",
+    "espn-fantasy-football-api": "^1.1.0",
+    "express": "^4.18.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }

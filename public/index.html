@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPN Fantasy Football Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">ESPN Fantasy Football Explorer</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/api-docs" target="_blank">API Docs</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Data Explorer</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="queryForm">
+                            <div class="mb-3">
+                                <label for="endpointSelect" class="form-label">Select Endpoint</label>
+                                <select class="form-select" id="endpointSelect">
+                                    <option value="league-info">League Info</option>
+                                    <option value="teams">Teams</option>
+                                    <option value="boxscore">Boxscore</option>
+                                    <option value="free-agents">Free Agents</option>
+                                    <option value="nfl-games">NFL Games</option>
+                                    <option value="draft-info">Draft Info</option>
+                                    <option value="historical-scoreboard">Historical Scoreboard</option>
+                                    <option value="historical-teams">Historical Teams</option>
+                                </select>
+                                <small class="form-text text-muted mt-1">Historical endpoints only work for previous seasons. Historical teams only work for pre-2018 seasons.</small>
+                            </div>
+                            
+                            <div id="seasonIdGroup" class="mb-3">
+                                <label for="seasonId" class="form-label">Season ID</label>
+                                <input type="number" class="form-control" id="seasonId" value="2023">
+                            </div>
+                            
+                            <div id="scoringPeriodIdGroup" class="mb-3">
+                                <label for="scoringPeriodId" class="form-label">Scoring Period ID</label>
+                                <input type="number" class="form-control" id="scoringPeriodId" value="1">
+                            </div>
+                            
+                            <div id="matchupPeriodIdGroup" class="mb-3">
+                                <label for="matchupPeriodId" class="form-label">Matchup Period ID</label>
+                                <input type="number" class="form-control" id="matchupPeriodId" value="1">
+                            </div>
+                            
+                            <div id="dateGroup" class="mb-3 d-none">
+                                <label for="startDate" class="form-label">Start Date (YYYYMMDD)</label>
+                                <input type="text" class="form-control" id="startDate" value="20230901">
+                                
+                                <label for="endDate" class="form-label mt-2">End Date (YYYYMMDD)</label>
+                                <input type="text" class="form-control" id="endDate" value="20230908">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Execute Query</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Results</h5>
+                        <div>
+                            <button class="btn btn-sm btn-light" id="toggleView">Toggle View</button>
+                            <button class="btn btn-sm btn-light ms-2" id="downloadJson">Download JSON</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="loading" class="text-center d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                        </div>
+                        
+                        <div id="resultsContainer">
+                            <pre id="jsonResults" class="p-3 bg-light rounded"></pre>
+                            <div id="visualResults" class="d-none">
+                                <div id="chartContainer" style="height: 400px;"></div>
+                                <div id="tableContainer" class="mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
